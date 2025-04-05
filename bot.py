@@ -1,13 +1,20 @@
 import os
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("BOT_TOKEN")  # Отримуємо токен з Railway
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Привіт! Я твій бот!")
+# Створюємо об'єкт Application (замість старого Updater)
+app = Application.builder().token(TOKEN).build()
 
-updater = Updater(TOKEN)
-updater.dispatcher.add_handler(CommandHandler("start", start))
-updater.start_polling()
-updater.idle()
+# Обробник команди /start
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Привіт! Я твій бот!")
+
+# Додаємо команду /start у хендлер
+app.add_handler(CommandHandler("start", start))
+
+# Запускаємо бота
+if __name__ == "__main__":
+    print("Бот запущено...")
+    app.run_polling()
