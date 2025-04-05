@@ -2,7 +2,7 @@ import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
-TOKEN = os.getenv("BOT_TOKEN")  # Отримуємо токен з Railway
+TOKEN = os.getenv("RAILWAY_TOKEN")  # Отримуємо токен з Railway
 
 # Створюємо об'єкт Application (замість старого Updater)
 app = Application.builder().token(TOKEN).build()
