@@ -2,7 +2,7 @@ import os
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-TOKEN = os.getenv("BOT_TOKEN")  # Отримуємо токен з Railway
+TOKEN = os.getenv("BOT_TOKEN")
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Привіт! Я твій бот!")
