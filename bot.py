@@ -1,20 +1,16 @@
+from telegram import Bot
 import os
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+import asyncio
 
-TOKEN = os.getenv("RAILWAY_TOKEN")  # Отримуємо токен з Railway
+# Отримуємо токен бота з Railway
+TOKEN = os.getenv("RAILWAY_TOKEN")
 
-# Створюємо об'єкт Application (замість старого Updater)
-app = Application.builder().token(TOKEN).build()
+bot = Bot(token=TOKEN)
 
-# Обробник команди /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Привіт! Я твій бот!")
+async def delete_commands():
+    await bot.set_my_commands([])  # Видаляємо всі команди
 
-# Додаємо команду /start у хендлер
-app.add_handler(CommandHandler("start", start))
+# Запускаємо функцію
+asyncio.run(delete_commands())
 
-# Запускаємо бота
-if __name__ == "__main__":
-    print("Бот запущено...")
-    app.run_polling()
+print("✅ Меню команд успішно очищено!")
