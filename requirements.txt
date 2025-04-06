@@ -1,4 +1,10 @@
 python-telegram-bot 
 aiogram
+asyncpg
+boto3
+aiohttp
+psycopg2
+python-dotenv
+
 
 
