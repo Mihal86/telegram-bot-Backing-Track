@@ -15,6 +15,13 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     register_handlers(dp)  # Реєструємо обробники команд
     await dp.start_polling()
+    
+    # Обробник команди /start
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Прив?т! Я тв?й бот!")
+
+# Додаємо команду /start у хендлер
+app.add_handler(CommandHandler("start", start))
 
 # Запускаємо бота
 if __name__ == "__main__":
