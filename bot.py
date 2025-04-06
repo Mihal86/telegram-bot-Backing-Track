@@ -1,100 +1,102 @@
-import logging
-import asyncio
-import asyncpg
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.filters import Command
-from aiogram.fsm.storage.memory import MemoryStorage
-from config import RAILWAY_TOKEN, DATABASE_URL, ADMIN_ID
+from aiogram.types import InputFile
+from aiogram.utils import executor
+import asyncpg
+import os
 
-# Налаштування логування
-logging.basicConfig(level=logging.INFO)
+RAILWAY_TOKEN = "your-telegram-bot-token"
+DATABASE_URL = os.getenv("DATABASE_URL")  # Ваш URL для підключення до PostgreSQL
 
-# Ініціалізація бота та диспетчера
 bot = Bot(token=RAILWAY_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
+dp = Dispatcher(bot)
 
-# Функція підключення до бази даних
-async def create_db_pool():
-    return await asyncpg.create_pool(DATABASE_URL)
+# Підключення до бази даних
+async def db_connect():
+    return await asyncpg.connect(DATABASE_URL)
 
-db_pool = None
+# Перевірка адміністратора
+ADMIN_ID = 6266469974
 
-# Ініціалізація БД
-async def init_db():
-    async with db_pool.acquire() as conn:
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS tracks (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                artist TEXT NOT NULL,
-                language TEXT CHECK (language IN ('uk', 'en')) NOT NULL,
-                file_url TEXT NOT NULL
-            );
-        ''')
+async def add_track_to_db(title, artist, language, file_url, image_url, pdf_url):
+    conn = await db_connect()
+    await conn.execute('''
+    INSERT INTO tracks (title, artist, language, file_url, image_url, pdf_url)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    ''', title, artist, language, file_url, image_url, pdf_url)
+    await conn.close()
 
-@dp.message(Command("start"))
-async def start_command(message: Message):
-    await message.answer("Привіт! Вітаємо у музичному магазині. Використовуйте /search <літера> для пошуку треків.")
+# Команда /start
+@dp.message_handler(commands=["start"])
+async def cmd_start(message: types.Message):
+    await message.answer("Привіт! Використовуй /search <літера> для пошуку треків.")
 
-@dp.message(Command("search"))
-async def search_tracks(message: Message):
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        await message.answer("Будь ласка, введіть літеру для пошуку.")
-        return
-    letter = args[1].lower()
-    async with db_pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT title, artist, file_url FROM tracks
-            WHERE LOWER(title) LIKE $1 OR LOWER(artist) LIKE $1
-        """, letter + '%')
+# Пошук треків
+@dp.message_handler(commands=["search"])
+async def cmd_search(message: types.Message):
+    search_letter = message.text.split()[1].lower()
+    conn = await db_connect()
+    tracks = await conn.fetch('''
+    SELECT title, artist, file_url FROM tracks
+    WHERE LOWER(title) LIKE $1 OR LOWER(artist) LIKE $1
+    ''', f'{search_letter}%')
+    await conn.close()
     
-    if rows:
-        response = "Знайдені треки:\n" + "\n".join(f"{row['title']} - {row['artist']} ({row['file_url']})" for row in rows)
+    if tracks:
+        result = "\n".join([f"{track['title']} - {track['artist']}" for track in tracks])
+        await message.answer(f"Результати пошуку:\n{result}")
     else:
-        response = "Треки не знайдено."
-    
-    await message.answer(response)
+        await message.answer("Треки не знайдені.")
 
-@dp.message(Command("add_track"))
-async def add_track(message: Message):
+# Додавання треку (для адміністратора)
+@dp.message_handler(commands=["add_track"])
+async def cmd_add_track(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-        await message.answer("У вас немає прав для додавання треків.")
+        await message.answer("У вас немає доступу до цієї команди.")
         return
     
-    args = message.text.split("|", maxsplit=3)
-    if len(args) < 4:
-        await message.answer("Формат команди: /add_track Назва | Виконавець | Мова (uk/en) | Посилання")
-        return
+    # Запитуємо дані для нового треку
+    await message.answer("Надішліть назву треку.")
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_title")
+
+@dp.message_handler(state="waiting_for_title")
+async def process_title(message: types.Message):
+    title = message.text
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_artist")
+    await message.answer("Тепер введіть виконавця.")
+
+@dp.message_handler(state="waiting_for_artist")
+async def process_artist(message: types.Message):
+    artist = message.text
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_language")
+    await message.answer("Введіть мову треку (uk/en).")
+
+@dp.message_handler(state="waiting_for_language")
+async def process_language(message: types.Message):
+    language = message.text
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_file_url")
+    await message.answer("Надішліть посилання на файл треку.")
+
+@dp.message_handler(state="waiting_for_file_url")
+async def process_file_url(message: types.Message):
+    file_url = message.text
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_image")
+    await message.answer("Надішліть зображення для треку.")
+
+@dp.message_handler(state="waiting_for_image", content_types=types.ContentType.PHOTO)
+async def process_image(message: types.Message):
+    image_url = message.photo[-1].file_id
+    await dp.current_state(user=message.from_user.id).set_state("waiting_for_pdf")
+    await message.answer("Надішліть PDF файл для треку.")
+
+@dp.message_handler(state="waiting_for_pdf", content_types=types.ContentType.DOCUMENT)
+async def process_pdf(message: types.Message):
+    pdf_url = message.document.file_id
+    await dp.current_state(user=message.from_user.id).finish()
+
+    # Додаємо трек до бази даних
+    await add_track_to_db(title, artist, language, file_url, image_url, pdf_url)
     
-    title, artist, language, file_url = map(str.strip, args[1:])
-    if language not in ("uk", "en"):
-        await message.answer("Мова має бути 'uk' або 'en'.")
-        return
-    
-    async with db_pool.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO tracks (title, artist, language, file_url)
-            VALUES ($1, $2, $3, $4)
-        """, title, artist, language, file_url)
-    
-    await message.answer(f"Трек '{title}' успішно додано!")
-
-# Обробник команди /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Прив?т! Я тв?й бот!")
-
-# Додаємо команду /start у хендлер
-app.add_handler(CommandHandler("start", start))
-
-
-async def main():
-    global db_pool
-    db_pool = await create_db_pool()
-    await init_db()
-    print("Бот запущено...")
-    await dp.start_polling(bot)
+    await message.answer("Трек успішно додано!")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
