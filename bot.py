@@ -1,16 +1,23 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+
 import os
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
-RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")  # Токен для бота
-DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")  # URL для бази даних
+TOKEN = os.getenv("RAILWAY_TOKEN")  # Отримуємо токен з Railway
 
-bot = Bot(token=RAILWAY_TOKEN)
-dp = Dispatcher(bot)
+# Створюємо об'єкт Application (зам?сть старого Updater)
+app = Application.builder().token(TOKEN).build()
 
-@dp.message_handler(commands=["start"])
-async def cmd_start(message: types.Message):
-    await message.answer("Привіт! Використовуй /search <літера> для пошуку треків.")
+# Обробник команди /start
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Прив?т! Я тв?й бот!")
 
+# Додаємо команду /start у хендлер
+app.add_handler(CommandHandler("start", start))
+
+# Запускаємо бота
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+    print("Бот запущено...")
+    app.run_polling()
+
+
