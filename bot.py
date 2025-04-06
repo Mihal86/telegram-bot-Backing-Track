@@ -1,28 +1,25 @@
-import asyncio
 import logging
-from aiogram import Bot, Dispatcher
-from handlers import register_handlers  # Підключаємо наші обробники команд
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.fsm.storage.memory import MemoryStorage
+from config import RAILWAY_TOKEN
 
-# Токен бота
-TOKEN = "RAILWAY_TOKEN"
+# Налаштування логування
+logging.basicConfig(level=logging.INFO)
 
-# Ініціалізація бота
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+# Ініціалізація бота та диспетчера
+bot = Bot(token=RAILWAY_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
 
-# Головна функція
+@dp.message(Command("start"))
+async def start_command(message: Message):
+    await message.answer("Привіт! Вітаємо у музичному магазині. Використовуйте /search для пошуку треків.")
+
 async def main():
-    logging.basicConfig(level=logging.INFO)
-    register_handlers(dp)  # Реєструємо обробники команд
-    await dp.start_polling()
-    
-    # Обробник команди /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Прив?т! Я тв?й бот!")
+    print("Бот запущено...")
+    await dp.start_polling(bot)
 
-# Додаємо команду /start у хендлер
-app.add_handler(CommandHandler("start", start))
-
-# Запускаємо бота
 if __name__ == "__main__":
     asyncio.run(main())
