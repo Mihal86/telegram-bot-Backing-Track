@@ -12,7 +12,7 @@ dp = Dispatcher(bot)
 
 # Підключення до бази даних
 async def db_connect():
-    return await asyncpg.connect(DATABASE_URL)
+    return await asyncpg.connect(${{ Postgres.DATABASE_URL }})
 
 # Перевірка адміністратора
 ADMIN_ID = 6266469974
