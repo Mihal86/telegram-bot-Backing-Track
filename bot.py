@@ -81,6 +81,14 @@ async def add_track(message: Message):
     
     await message.answer(f"Трек '{title}' успішно додано!")
 
+# Обробник команди /start
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Прив?т! Я тв?й бот!")
+
+# Додаємо команду /start у хендлер
+app.add_handler(CommandHandler("start", start))
+
+
 async def main():
     global db_pool
     db_pool = await create_db_pool()
