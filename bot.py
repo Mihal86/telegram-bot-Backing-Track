@@ -5,14 +5,14 @@ import asyncpg
 import os
 
 RAILWAY_TOKEN = "your-telegram-bot-token"
-DATABASE_URL = os.getenv("${{ Postgres.DATABASE_URL }}")  # Ваш URL для підключення до PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL")  # Ваш URL для підключення до PostgreSQL
 
 bot = Bot(token=RAILWAY_TOKEN)
 dp = Dispatcher(bot)
 
 # Підключення до бази даних
 async def db_connect():
-    return await asyncpg.connect(${{ Postgres.DATABASE_URL }})
+    return await asyncpg.connect("DATABASE_URL")
 
 # Перевірка адміністратора
 ADMIN_ID = 6266469974
