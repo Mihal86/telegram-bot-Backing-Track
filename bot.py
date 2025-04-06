@@ -6,8 +6,10 @@ import os
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 
+# Завантажуємо змінні середовища
+DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")  # Використовуємо нову змінну
+
 RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")
-DATABASE_URL = os.getenv("DATABASE_URL")  # Ваш URL для підключення до PostgreSQL
 
 bot = Bot(token=RAILWAY_TOKEN)
 dp = Dispatcher(bot)
@@ -22,7 +24,7 @@ class AddTrackStates(StatesGroup):
 
 # Підключення до бази даних
 async def db_connect():
-    return await asyncpg.connect(DATABASE_URL)
+    return await asyncpg.connect(DATABASE_URL)  # Підключення через змінну середовища
 
 # Перевірка адміністратора
 ADMIN_ID = 6266469974
@@ -67,15 +69,6 @@ async def cmd_add_track(message: types.Message):
     # Запитуємо дані для нового треку
     await message.answer("Надішліть назву треку.")
     await dp.current_state(user=message.from_user.id).set_state(AddTrackStates.waiting_for_title)
-
-@dp.message_handler(state=AddTrackStates.waiting_for_title)
-async def process_title(message: types.Message, state: FSMContext):
-    title = message.text
-    await state.update_data(title=title)
-    await AddTrackStates.waiting_for_artist.set()
-    await message.answer("Тепер введіть виконавця.")
-
-# Додаткові обробники, як було описано раніше...
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
