@@ -1,22 +1,21 @@
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher
+from handlers import register_handlers  # Підключаємо наші обробники команд
 
-import os
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+# Токен бота
+TOKEN = "RAILWAY_TOKEN"
 
-TOKEN = os.getenv("RAILWAY_TOKEN")  # Отримуємо токен з Railway
+# Ініціалізація бота
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 
-# Створюємо об'єкт Application (замість старого Updater)
-app = Application.builder().token(TOKEN).build()
-
-# Обробник команди /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Привіт! Я твій бот!")
-
-# Додаємо команду /start у хендлер
-app.add_handler(CommandHandler("start", start))
+# Головна функція
+async def main():
+    logging.basicConfig(level=logging.INFO)
+    register_handlers(dp)  # Реєструємо обробники команд
+    await dp.start_polling()
 
 # Запускаємо бота
 if __name__ == "__main__":
-    print("Бот запущено...")
-    app.run_polling()
-
+    asyncio.run(main())
