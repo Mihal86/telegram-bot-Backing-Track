@@ -1,5 +1,4 @@
 python-telegram-bot 
-git add requirements.txt
-git commit -m "Додав aiogram у requirements.txt"
-git push origin main
+aiogram
+
 
