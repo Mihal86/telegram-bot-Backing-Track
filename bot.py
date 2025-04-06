@@ -5,7 +5,7 @@ import asyncpg
 import os
 
 RAILWAY_TOKEN = "your-telegram-bot-token"
-DATABASE_URL = os.getenv("DATABASE_URL")  # Ваш URL для підключення до PostgreSQL
+DATABASE_URL = os.getenv("${{ Postgres.DATABASE_URL }}")  # Ваш URL для підключення до PostgreSQL
 
 bot = Bot(token=RAILWAY_TOKEN)
 dp = Dispatcher(bot)
