@@ -1,0 +1,22 @@
+{
+    "А": [
+        {
+            "name": "Альфа - Пісня 1",
+            "url": "https://example.com/track1.mp3",
+            "cover": "https://example.com/cover1.jpg",
+            "pdf": "https://example.com/track1.pdf"
+        },
+        {
+            "name": "Альфа - Пісня 2",
+            "url": "https://example.com/track2.mp3"
+        }
+    ],
+    "C": [
+        {
+            "name": "Coldplay - Yellow",
+            "url": "https://example.com/yellow.mp3",
+            "cover": "https://example.com/yellow.jpg"
+        }
+    ]
+}
+
