@@ -1,5 +1,6 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+import json
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
 
 # Отримуємо токен з Railway
@@ -8,18 +9,12 @@ TOKEN = os.getenv("RAILWAY_TOKEN")
 # Створюємо об'єкт Application
 app = Application.builder().token(TOKEN).build()
 
-# База даних треків (назва + посилання)
-tracks_db = {
-    "А": [
-        {"name": "Альфа - Пісня 1", "url": "https://example.com/track1.mp3"},
-        {"name": "Альфа - Пісня 2", "url": "https://example.com/track2.mp3"},
-    ],
-    "C": [
-        {"name": "Coldplay - Yellow", "url": "https://example.com/yellow.mp3"},
-        {"name": "Coldplay - Fix You", "url": "https://example.com/fixyou.mp3"},
-    ],
-    # Додай більше треків за необхідності
-}
+# Завантажуємо базу треків із JSON
+def load_tracks():
+    with open("tracks.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+tracks_db = load_tracks()
 
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
@@ -27,7 +22,7 @@ async def start(update: Update, context: CallbackContext):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("Привіт! Я твій бот. Обери дію:", reply_markup=reply_markup)
 
-# Функція для створення клавіатури з алфавітом
+# Функція для клавіатури алфавіту
 def get_alphabet_keyboard():
     alphabet_rows = [
         ["А", "Б", "В", "Г", "Д", "Е", "Є", "Ж", "З", "И", "І", "Ї"],
@@ -39,17 +34,20 @@ def get_alphabet_keyboard():
     ]
     return ReplyKeyboardMarkup(alphabet_rows, resize_keyboard=True, one_time_keyboard=True)
 
-# Обробник натискання "Search Backing Track" → показує клавіатуру
+# Обробник натискання "Search Backing Track"
 async def show_alphabet(update: Update, context: CallbackContext):
     await update.message.reply_text("Виберіть літеру:", reply_markup=get_alphabet_keyboard())
 
-# Обробник вибору літери та виведення списку треків
+# Обробник вибору літери та показу треків
 async def letter_selected(update: Update, context: CallbackContext):
-    letter = update.message.text  # Отримуємо вибрану літеру
+    letter = update.message.text
     tracks = tracks_db.get(letter, [])
 
     if tracks:
-        keyboard = [[InlineKeyboardButton(f"🎵 {track['name']}", callback_data=f"play_{track['url']}")] for track in tracks]
+        keyboard = [
+            [InlineKeyboardButton(f"🎵 {track['name']}", callback_data=f"play_{letter}_{idx}")]
+            for idx, track in enumerate(tracks)
+        ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(f"Ось доступні треки для літери '{letter}':", reply_markup=reply_markup)
     else:
@@ -60,8 +58,21 @@ async def play_track(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     
-    track_url = query.data.split("_", 1)[1]  # Отримуємо URL треку
-    await query.message.reply_audio(audio=track_url, caption="🎶 Ваш трек для прослуховування.")
+    data = query.data.split("_")
+    letter, track_idx = data[1], int(data[2])
+    track = tracks_db[letter][track_idx]
+
+    # Відправляємо обкладинку (якщо є)
+    if "cover" in track:
+        media = InputMediaPhoto(media=track["cover"], caption=f"🎵 {track['name']}")
+        await query.message.reply_media_group([media])
+
+    # Відправляємо аудіофайл
+    await query.message.reply_audio(audio=track["url"], caption="🎶 Ваш трек для прослуховування.")
+
+    # Відправляємо PDF (якщо є)
+    if "pdf" in track:
+        await query.message.reply_document(document=track["pdf"], caption="📄 Ноти")
 
 # Додаємо обробники команд
 app.add_handler(CommandHandler("start", start))
