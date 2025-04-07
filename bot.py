@@ -11,10 +11,10 @@ app = Application.builder().token(TOKEN).build()
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
     keyboard = [
-        [InlineKeyboardButton("Переглянути музику", callback_data="music_menu")]
+        [InlineKeyboardButton("Пошук Backing Track", callback_data="music_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Привіт! Я твій бот. Вибери опцію:", reply_markup=reply_markup)
+    await update.message.reply_text("Вибери опцію:", reply_markup=reply_markup)
 
 # Обробник команди /music — показує алфавіт для вибору
 async def music(update: Update, context: CallbackContext):
