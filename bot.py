@@ -86,25 +86,3 @@ if __name__ == "__main__":
     app.run_polling()
 
 
-import os
-from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackContext
-from admin_panel import add_admin_handlers  # Імпортуємо функцію з admin_panel.py
-
-TOKEN = os.getenv("RAILWAY_TOKEN")
-
-app = Application.builder().token(TOKEN).build()
-
-# Обробник команди /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Привіт! Я твій бот!")
-
-# Додаємо хендлер для /start
-app.add_handler(CommandHandler("start", start))
-
-# Додаємо хендлери для адмін панелі
-add_admin_handlers(app)
-
-if __name__ == "__main__":
-    print("Бот запущено...")
-    app.run_polling()
