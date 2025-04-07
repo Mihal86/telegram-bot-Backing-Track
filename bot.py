@@ -18,13 +18,16 @@ async def start(update: Update, context: CallbackContext):
 
 # Функція для створення клавіатури з алфавітом
 def get_alphabet_keyboard():
-    keyboard = [
-        [InlineKeyboardButton(letter, callback_data=f"letter_{letter}") for letter in row]
-        for row in ["АБВГДЕЄЖЗИІЇ", "ЙКЛМНОПРСТУФ", "ХЦЧШЩЬЮЯ"],
-    ] + [
-        [InlineKeyboardButton(letter, callback_data=f"letter_{letter}") for letter in row]
-        for row in ["ABCDEFG", "HIJKLMNOP", "QRSTUVWXYZ"]
+    alphabet_rows = [
+        "АБВГДЕЄЖЗИІЇ",
+        "ЙКЛМНОПРСТУФ",
+        "ХЦЧШЩЬЮЯ",
+        "ABCDEFG",
+        "HIJKLMNOP",
+        "QRSTUVWXYZ"
     ]
+    
+    keyboard = [[InlineKeyboardButton(letter, callback_data=f"letter_{letter}") for letter in row] for row in alphabet_rows]
     
     return InlineKeyboardMarkup(keyboard)
 
