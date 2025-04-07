@@ -10,7 +10,11 @@ app = Application.builder().token(TOKEN).build()
 
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Привіт! Я твій бот!")
+    keyboard = [
+        [InlineKeyboardButton("Переглянути музику", callback_data="music_menu")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Привіт! Я твій бот. Вибери опцію:", reply_markup=reply_markup)
 
 # Обробник команди /music — показує алфавіт для вибору
 async def music(update: Update, context: CallbackContext):
@@ -28,9 +32,15 @@ async def letter_selected(update: Update, context: CallbackContext):
     await query.answer()
     await query.message.reply_text(f"Ви вибрали літеру: {letter}\n(Тут буде список треків)")
 
+# Обробник натискання на кнопку в меню
+async def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    if query.data == "music_menu":
+        await music(update, context)
+
 # Додаємо обробники команд
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("music", music))
+app.add_handler(CallbackQueryHandler(button_handler, pattern="^music_menu$"))
 app.add_handler(CallbackQueryHandler(letter_selected, pattern="^letter_"))
 
 # Запускаємо бота
