@@ -1,27 +1,21 @@
-import asyncio
-import logging
 import os
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import Message
-from aiogram.filters import Command
-from aiogram.enums import ParseMode
+from telegram import Update
+from telegram.ext import Application, CommandHandler, CallbackContext
 
-# Отримуємо токен з змінних середовища
+# Отримуємо токен з змінних середовища Railway
 TOKEN = os.getenv("RAILWAY_TOKEN")
 
-# Ініціалізуємо бота та диспетчера
-bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
-dp = Dispatcher()
+# Створюємо об'єкт Application
+app = Application.builder().token(TOKEN).build()
 
 # Обробник команди /start
-@dp.message(Command("start"))
-async def cmd_start(message: Message):
-    await message.answer("Привіт, я твій бот!")
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Привіт! Я твій бот!")
 
-# Функція запуску бота
-async def main():
-    logging.basicConfig(level=logging.INFO)
-    await dp.start_polling(bot)
+# Додаємо обробник команди /start
+app.add_handler(CommandHandler("start", start))
 
+# Запускаємо бота
 if __name__ == "__main__":
-    asyncio.run(main())
+    print("Бот запущено...")
+    app.run_polling()
