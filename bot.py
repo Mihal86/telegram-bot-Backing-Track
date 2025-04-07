@@ -11,10 +11,10 @@ app = Application.builder().token(TOKEN).build()
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
     keyboard = [
-        [InlineKeyboardButton("Пошук Backing Track", callback_data="music_menu")]
+        [InlineKeyboardButton("Search Backing Track", callback_data="music_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Вибери опцію:", reply_markup=reply_markup)
+    await update.message.reply_text("Привіт! Я твій бот. Обери дію:", reply_markup=reply_markup)
 
 # Обробник команди /music — показує алфавіт для вибору
 async def music(update: Update, context: CallbackContext):
@@ -23,20 +23,25 @@ async def music(update: Update, context: CallbackContext):
         for row in ["АБВГДЕЄЖЗИІЇ", "ЙКЛМНОПРСТУФ", "ХЦЧШЩЬЮЯ", "ABCDEFG", "HIJKLMNOP", "QRSTUVWXYZ"]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Виберіть літеру:", reply_markup=reply_markup)
+    
+    if isinstance(update, Update) and update.message:
+        await update.message.reply_text("Виберіть літеру:", reply_markup=reply_markup)
+    elif isinstance(update, CallbackContext) and update.callback_query:
+        await update.callback_query.message.edit_text("Виберіть літеру:", reply_markup=reply_markup)
+        await update.callback_query.answer()
 
 # Обробник вибору літери
 async def letter_selected(update: Update, context: CallbackContext):
     query = update.callback_query
     letter = query.data.split("_")[1]  # Отримуємо вибрану літеру
     await query.answer()
-    await query.message.reply_text(f"Ви вибрали літеру: {letter}\n(Тут буде список треків)")
+    await query.message.edit_text(f"Ви вибрали літеру: {letter}\n(Тут буде список треків)")
 
-# Обробник натискання на кнопку в меню
+# Обробник натискання на кнопку "Search Backing Track"
 async def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query.data == "music_menu":
-        await music(update, context)
+        await music(update.callback_query, context)
 
 # Додаємо обробники команд
 app.add_handler(CommandHandler("start", start))
