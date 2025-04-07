@@ -8,6 +8,16 @@ TOKEN = os.getenv("RAILWAY_TOKEN")
 # Створюємо об'єкт Application
 app = Application.builder().token(TOKEN).build()
 
+# База даних треків (поки що просто словник)
+tracks_db = {
+    "А": ["Альфа - Пісня 1", "Альфа - Пісня 2"],
+    "Б": ["Бета - Трек 1"],
+    "C": ["Coldplay - Yellow", "Coldplay - Fix You"],
+    "D": ["Drake - God's Plan"],
+    "E": ["Eminem - Lose Yourself"],
+    # Додай більше треків за необхідності
+}
+
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
     keyboard = [["Search Backing Track"]]
@@ -30,10 +40,18 @@ def get_alphabet_keyboard():
 async def show_alphabet(update: Update, context: CallbackContext):
     await update.message.reply_text("Виберіть літеру:", reply_markup=get_alphabet_keyboard())
 
-# Обробник вибору літери
+# Обробник вибору літери та виведення списку треків
 async def letter_selected(update: Update, context: CallbackContext):
     letter = update.message.text  # Отримуємо вибрану літеру
-    await update.message.reply_text(f"Ви вибрали літеру: {letter}\n(Тут буде список треків)")
+    
+    # Отримуємо список треків для цієї літери
+    tracks = tracks_db.get(letter, [])  
+
+    if tracks:
+        track_list = "\n".join([f"🎵 {track}" for track in tracks])
+        await update.message.reply_text(f"Ось доступні треки для літери '{letter}':\n\n{track_list}")
+    else:
+        await update.message.reply_text(f"Немає доступних треків для літери '{letter}'.")
 
 # Додаємо обробники команд
 app.add_handler(CommandHandler("start", start))
