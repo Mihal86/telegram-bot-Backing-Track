@@ -1,6 +1,8 @@
 import os
+import json
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
+
 import psycopg2
 
 TOKEN = os.getenv("RAILWAY_TOKEN")
