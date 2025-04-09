@@ -2,41 +2,36 @@ import os
 import json
 from telegram import (
     Update, ReplyKeyboardMarkup, InlineKeyboardMarkup,
-    InlineKeyboardButton, InputMediaPhoto, InputFile
+    InlineKeyboardButton, InputMediaPhoto
 )
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     filters, CallbackContext, CallbackQueryHandler
 )
 
-# Отримуємо токен з Railway
 TOKEN = os.getenv("RAILWAY_TOKEN")
-ADMIN_ID = 6266469974  # ID адміністратора
+ADMIN_ID = 6266469974
 TRACKS_FILE = "tracks.json"
 
 app = Application.builder().token(TOKEN).build()
 
-# Завантаження бази треків
 def load_tracks():
     if not os.path.exists(TRACKS_FILE):
         return {}
     with open(TRACKS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Збереження бази треків
 def save_tracks(data):
     with open(TRACKS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 tracks_db = load_tracks()
 
-# Стартове меню
 async def start(update: Update, context: CallbackContext):
     keyboard = [["Search Backing Track"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text("Привіт! Я твій бот. Обери дію:", reply_markup=reply_markup)
 
-# Меню алфавіту
 def get_alphabet_keyboard():
     alphabet_rows = [
         ["А", "Б", "В", "Г", "Д", "Е", "Є", "Ж", "З", "И", "І", "Ї"],
@@ -48,12 +43,13 @@ def get_alphabet_keyboard():
     ]
     return ReplyKeyboardMarkup(alphabet_rows, resize_keyboard=True)
 
-# Відображення алфавіту
 async def show_alphabet(update: Update, context: CallbackContext):
     await update.message.reply_text("Виберіть літеру:", reply_markup=get_alphabet_keyboard())
 
-# Показ треків за обраною літерою
 async def letter_selected(update: Update, context: CallbackContext):
+    if "adding_track" in context.user_data:
+        return await receive_letter(update, context)
+    
     letter = update.message.text
     tracks = tracks_db.get(letter, [])
 
@@ -67,7 +63,6 @@ async def letter_selected(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text(f"Немає доступних треків для літери '{letter}'.")
 
-# Прослуховування треку
 async def play_track(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -85,7 +80,6 @@ async def play_track(update: Update, context: CallbackContext):
     if "pdf" in track:
         await query.message.reply_document(document=track["pdf"], caption="📄 Ноти")
 
-# Адмін-панель
 admin_keyboard = ReplyKeyboardMarkup(
     [["Додати трек", "Редагувати трек"]],
     resize_keyboard=True
@@ -97,7 +91,6 @@ async def admin(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("У вас немає прав доступу.")
 
-# Додавання треку (адмін)
 async def add_track(update: Update, context: CallbackContext):
     if update.message.from_user.id != ADMIN_ID:
         return
@@ -106,26 +99,17 @@ async def add_track(update: Update, context: CallbackContext):
     context.user_data["adding_track"] = True
 
 async def receive_letter(update: Update, context: CallbackContext):
-    if "adding_track" not in context.user_data:
-        return
-    
     letter = update.message.text.upper()
     context.user_data["track_letter"] = letter
     await update.message.reply_text("Тепер відправте назву треку:")
     context.user_data["adding_name"] = True
 
 async def receive_name(update: Update, context: CallbackContext):
-    if "adding_name" not in context.user_data:
-        return
-    
     context.user_data["track_name"] = update.message.text
     await update.message.reply_text("Тепер відправте аудіофайл:")
     context.user_data["adding_audio"] = True
 
 async def receive_audio(update: Update, context: CallbackContext):
-    if "adding_audio" not in context.user_data:
-        return
-    
     file_id = update.message.audio.file_id
     letter = context.user_data["track_letter"]
     name = context.user_data["track_name"]
@@ -141,7 +125,6 @@ async def receive_audio(update: Update, context: CallbackContext):
     await update.message.reply_text(f"Трек '{name}' додано до категорії '{letter}'.")
     context.user_data.clear()
 
-# Додавання обкладинки (за бажанням)
 async def receive_cover(update: Update, context: CallbackContext):
     if "adding_audio" not in context.user_data:
         return
@@ -151,7 +134,6 @@ async def receive_cover(update: Update, context: CallbackContext):
     save_tracks(tracks_db)
     await update.message.reply_text("Обкладинку збережено.")
 
-# Додавання нот (PDF)
 async def receive_pdf(update: Update, context: CallbackContext):
     if "adding_audio" not in context.user_data:
         return
@@ -161,7 +143,6 @@ async def receive_pdf(update: Update, context: CallbackContext):
     save_tracks(tracks_db)
     await update.message.reply_text("PDF збережено.")
 
-# Обробники команд
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.Text("Search Backing Track"), show_alphabet))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, letter_selected))
