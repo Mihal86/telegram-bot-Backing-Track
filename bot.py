@@ -7,7 +7,7 @@ import psycopg2
 
 TOKEN = os.getenv("RAILWAY_TOKEN")
 ADMIN_ID = 6266469974  # ID адміністратора
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
 
 app = Application.builder().token(TOKEN).build()
 
