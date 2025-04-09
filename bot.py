@@ -1,9 +1,6 @@
 import os
 import psycopg2
 
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackContext
-
 # Отримуємо URI з середовища
 DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
 
