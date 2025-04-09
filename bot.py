@@ -101,10 +101,3 @@ if __name__ == "__main__":
     app.run_polling()
 
 
-def test_db_connection():
-    try:
-        conn = get_db_connection()
-        print("Підключення до бази даних успішне!")
-        conn.close()
-    except Exception as e:
-        print(f"Помилка при підключенні до бази даних: {e}")
