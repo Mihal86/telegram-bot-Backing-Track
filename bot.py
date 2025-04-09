@@ -1,66 +1,58 @@
 import os
-import json
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
-
 import psycopg2
+from urllib.parse import urlparse
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 
+# Завантаження змінних середовища (якщо тестуєте локально)
+from dotenv import load_dotenv
+load_dotenv()  # Завантажуємо змінні з .env файлу
+
+# Токен бота
 TOKEN = os.getenv("RAILWAY_TOKEN")
 ADMIN_ID = 6266469974  # ID адміністратора
+
+# Отримуємо URL для підключення до бази даних
 DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
 
-app = Application.builder().token(TOKEN).build()
-
-# Підключення до PostgreSQL
+# Підключення до бази даних
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+    try:
+        result = urlparse(DATABASE_URL)
+        conn = psycopg2.connect(
+            dbname=result.path[1:],  # Витягуємо ім'я бази даних з URL
+            user=result.username,     # Витягуємо користувача
+            password=result.password, # Витягуємо пароль
+            host=result.hostname,     # Витягуємо хост
+            port=result.port          # Витягуємо порт
+        )
+        return conn
+    except Exception as e:
+        print(f"Помилка при підключенні до бази даних: {e}")
+        return None
 
-# Створення таблиці для треків
+# Створення таблиці в базі даних (якщо вона ще не існує)
 def create_table():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
+    if conn:
+        cur = conn.cursor()
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS tracks (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            letter CHAR(1) NOT NULL,
-            url VARCHAR(255),
-            cover VARCHAR(255),
-            pdf VARCHAR(255)
-        );
-    ''')
-    conn.commit()
-    cursor.close()
-    conn.close()
+            artist VARCHAR(255),
+            genre VARCHAR(100),
+            path VARCHAR(255) NOT NULL
+        )
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
 
-# Додавання треку
-def add_track(name, letter, url, cover=None, pdf=None):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO tracks (name, letter, url, cover, pdf) 
-        VALUES (%s, %s, %s, %s, %s);
-    ''', (name, letter, url, cover, pdf))
-    conn.commit()
-    cursor.close()
-    conn.close()
+# Ініціалізація таблиці при старті бота
+create_table()
 
-# Пошук треків за літерою
-def get_tracks_by_letter(letter):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id, name, url, cover, pdf 
-        FROM tracks 
-        WHERE letter = %s;
-    ''', (letter,))
-    tracks = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return tracks
-
-# Меню для адміністратора
+# Створення клавіатури для адміністратора
 admin_keyboard = ReplyKeyboardMarkup(
     [["Додати трек", "Редагувати трек"]],
     resize_keyboard=True
@@ -77,27 +69,29 @@ async def admin(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("У вас немає прав доступу.")
 
-# Обробник додавання треку
+# Обробник команди "Додати трек"
 async def add_track_handler(update: Update, context: CallbackContext):
+    # Тільки для адміністратора
     if update.message.from_user.id == ADMIN_ID:
-        track_name = "Новий трек"  # Приклад
-        track_letter = "A"  # Приклад
-        track_url = "http://example.com/track.mp3"  # Приклад
-        # Додаємо трек до бази
-        add_track(track_name, track_letter, track_url)
-        await update.message.reply_text(f"Трек '{track_name}' додано!")
-    else:
-        await update.message.reply_text("У вас немає прав доступу.")
+        await update.message.reply_text("Будь ласка, надайте назву треку.")
+
+# Обробник команди "Редагувати трек"
+async def edit_track_handler(update: Update, context: CallbackContext):
+    # Тільки для адміністратора
+    if update.message.from_user.id == ADMIN_ID:
+        await update.message.reply_text("Виберіть трек для редагування.")
 
 # Додавання обробників команд
+app = Application.builder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("admin", admin))
+
+# Додавання обробника для кнопки "Додати трек"
 app.add_handler(MessageHandler(filters.Text("Додати трек"), add_track_handler))
 
-# Створення таблиці для треків при старті
-create_table()
+# Додавання обробника для кнопки "Редагувати трек"
+app.add_handler(MessageHandler(filters.Text("Редагувати трек"), edit_track_handler))
 
-# Запуск бота
 if __name__ == "__main__":
     print("Бот запущено...")
     app.run_polling()
