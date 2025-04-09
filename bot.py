@@ -3,9 +3,20 @@ from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKe
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, CallbackQueryHandler
 import psycopg2
 
+# Перевірка з'єднання
+def test_db_connection():
+    try:
+        conn = get_db_connection()
+        print("Підключення до бази даних успішне!")
+        conn.close()
+    except Exception as e:
+        print(f"Помилка при підключенні до бази даних: {e}")
+
+# Викликаємо тестову функцію, щоб перевірити підключення
+test_db_connection()
 TOKEN = os.getenv("RAILWAY_TOKEN")
 ADMIN_ID = 6266469974  # ID адміністратора
-DATABASE_URL = os.getenv("postgresql://postgres:WdZTOBcrjZXsXSdxELttDUtSJntpQUWT@yamabiko.proxy.rlwy.net:45245/railway")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 app = Application.builder().token(TOKEN).build()
 
