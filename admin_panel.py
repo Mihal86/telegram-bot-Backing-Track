@@ -1,36 +1,33 @@
-from telegram.ext import CallbackQueryHandler
+import os
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackContext
 
-# Обробка натискання кнопки
-async def button(update: Update, context: CallbackContext):
-    query = update.callback_query
-    await query.answer()  # Відповідаємо на запит
-    callback_data = query.data  # Отримуємо callback_data
+TOKEN = os.getenv("RAILWAY_TOKEN")
+ADMIN_ID = 6266469974  # ID адміністратора
 
-    if callback_data == "add_track":
-        await query.edit_message_text("Ти обрав додавання треку.")
-        # Додати код для додавання треку
-    elif callback_data == "edit_track":
-        await query.edit_message_text("Ти обрав редагування треку.")
-        # Додати код для редагування треку
-    elif callback_data == "delete_track":
-        await query.edit_message_text("Ти обрав видалення треку.")
-        # Додати код для видалення треку
+app = Application.builder().token(TOKEN).build()
 
-# Реєстрація обробника натискання кнопок
-def main():
-    # Токен бота
-    TOKEN = "your-telegram-bot-token"
-    
-    # Створення об'єкта Application
-    application = Application.builder().token(TOKEN).build()
+# Меню для адміністратора
+admin_keyboard = ReplyKeyboardMarkup(
+    [["Додати трек", "Редагувати трек"]],
+    resize_keyboard=True
+)
 
-    # Додаємо хендлери
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("admin", admin))
-    application.add_handler(CallbackQueryHandler(button))
+# Обробник команди /start
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Привіт! Я твій бот!")
 
-    # Запуск бота
-    application.run_polling()
+# Обробник команди /admin
+async def admin(update: Update, context: CallbackContext):
+    if update.message.from_user.id == ADMIN_ID:
+        await update.message.reply_text("Адмін-панель:", reply_markup=admin_keyboard)
+    else:
+        await update.message.reply_text("У вас немає прав доступу.")
+
+# Додавання обробника для /start та /admin
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("admin", admin))
 
 if __name__ == "__main__":
-    main()
+    print("Бот запущено...")
+    app.run_polling()
