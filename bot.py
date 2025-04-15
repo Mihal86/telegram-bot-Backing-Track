@@ -9,9 +9,22 @@ from telegram.ext import (
     filters, CallbackContext, CallbackQueryHandler
 )
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 TOKEN = os.getenv("RAILWAY_TOKEN")
+
+# Функція підключення до бази
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        logging.info("✅ Успішне підключення до бази даних")
+        return conn
+    except Exception as e:
+        logging.error(f"❌ Помилка підключення до бази: {e}")
+        
+        return None
 ADMIN_ID = 6266469974
 TRACKS_FILE = "tracks.json"
+
 
 app = Application.builder().token(TOKEN).build()
 
