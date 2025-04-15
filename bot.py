@@ -8,11 +8,15 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     filters, CallbackContext, CallbackQueryHandler
 )
-
+# Логування
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
 # Отримання змінної середовища з Railway
 DATABASE_URL = os.getenv("DATABASE_URL")
-TOKEN = os.getenv("RAILWAY_TOKEN")  # обов'язково вкажи в Railway
+RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")  # обов'язково вкажи в Railway
 
 # Функція підключення до бази
 def get_db_connection():
