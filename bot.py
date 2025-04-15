@@ -1,19 +1,51 @@
 import os
-import asyncio
+import logging
+import psycopg2
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from dotenv import load_dotenv
-from db import test_db_connection
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
 
-load_dotenv()
-RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")
+# Логування
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
+# Отримання змінної середовища з Railway
+DATABASE_URL = os.getenv("DATABASE_URL")
+RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")  # обов'язково вкажи в Railway
+
+# Функція підключення до бази
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        logging.info("✅ Успішне підключення до бази даних")
+        return conn
+    except Exception as e:
+        logging.error(f"❌ Помилка підключення до бази: {e}")
+        return None
+
+# Простий хендлер /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привіт! Бот працює ✅")
+    await update.message.reply_text("Привіт! Це музичний бот 🎵")
 
-if __name__ == "__main__":
-    asyncio.run(test_db_connection())  # тест БД при старті
-
+# Основна асинхронна функція
+async def main():
     app = ApplicationBuilder().token(RAILWAY_TOKEN).build()
+
+    # Хендлери
     app.add_handler(CommandHandler("start", start))
-    app.run_polling()
+
+    # Перевірка БД під час запуску
+    get_db_connection()
+
+    # Запуск бота
+    await app.run_polling()
+
+# Запуск програми
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
