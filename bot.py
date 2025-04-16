@@ -8,14 +8,13 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     filters, CallbackContext, CallbackQueryHandler
 )
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("${{ Postgres-KFcd.DATABASE_URL }}")
 TOKEN = os.getenv("RAILWAY_TOKEN")
 
 # Функція підключення до бази
 def get_db_connection():
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(${{ Postgres-KFcd.DATABASE_URL }})
         logging.info("✅ Успішне підключення до бази даних")
         return conn
     except Exception as e:
