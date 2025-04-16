@@ -13,7 +13,7 @@ if not TOKEN:
     raise ValueError("❌ RAILWAY_TOKEN не встановлено!")
 
 if not DB_URL:
-    raise ValueError("❌ DATABASE_URL не встановлено!")
+    raise ValueError("❌ DATABASE_PUBLIC_URL не встановлено!")
 
 # Функція для перевірки підключення до бази
 def check_postgres_connection():
