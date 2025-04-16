@@ -6,7 +6,7 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 
 # Отримання змінних середовища
 TOKEN = os.getenv("RAILWAY_TOKEN")
-DB_URL = os.getenv("DATABASE_URL")
+DB_URL = os.getenv("DATABASE_PUBLIC_URL")
 
 # Перевірка наявності змінних
 if not TOKEN:
