@@ -1,21 +1,42 @@
 import os
+import psycopg2
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 
-# Отримуємо токен з змінних середовища Railway
+# Отримання змінних середовища
 TOKEN = os.getenv("RAILWAY_TOKEN")
+DB_URL = os.getenv("DATABASE_URL")
 
-# Створюємо об'єкт Application
-app = Application.builder().token(TOKEN).build()
+# Перевірка наявності змінних
+if not TOKEN:
+    raise ValueError("❌ RAILWAY_TOKEN не встановлено!")
+
+if not DB_URL:
+    raise ValueError("❌ DATABASE_URL не встановлено!")
+
+# Функція для перевірки підключення до бази
+def check_postgres_connection():
+    try:
+        conn = psycopg2.connect(DB_URL)
+        conn.close()
+        print("✅ Успішне підключення до PostgreSQL")
+    except Exception as e:
+        print("❌ Помилка підключення до бази:", e)
 
 # Обробник команди /start
 async def start(update: Update, context: CallbackContext):
     await update.message.reply_text("Привіт! Я твій бот!")
 
-# Додаємо обробник команди /start
-app.add_handler(CommandHandler("start", start))
+# Основна функція
+async def main():
+    check_postgres_connection()
 
-# Запускаємо бота
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+
+    print("🤖 Бот запущено...")
+    await app.run_polling()
+
 if __name__ == "__main__":
-    print("Бот запущено...")
-    app.run_polling()
+    asyncio.run(main())
