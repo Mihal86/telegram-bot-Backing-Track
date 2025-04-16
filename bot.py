@@ -9,7 +9,7 @@ from telegram.ext import (
     filters, CallbackContext, CallbackQueryHandler
 )
 
-TOKEN = os.getenv("RAILWAY_TOKEN")
+TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = 6266469974
 TRACKS_FILE = "tracks.json"
 
