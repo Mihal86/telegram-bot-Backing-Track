@@ -6,19 +6,19 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 
 # Отримання змінних середовища
 TOKEN = os.getenv("RAILWAY_TOKEN")
-DATABASE_URL = os.getenv("DATABASE_URL")
+DB_URL = os.getenv("DATABASE_URL")
 
 # Перевірка наявності змінних
 if not TOKEN:
     raise ValueError("❌ RAILWAY_TOKEN не встановлено!")
 
-if not DATABASE_URL:
+if not DB_URL:
     raise ValueError("❌ DATABASE_URL не встановлено!")
 
 # Функція для перевірки підключення до бази
 def check_postgres_connection():
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(DB_URL)
         conn.close()
         print("✅ Успішне підключення до PostgreSQL")
     except Exception as e:
