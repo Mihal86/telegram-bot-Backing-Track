@@ -6,14 +6,14 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 
 # Отримання змінних середовища
 TOKEN = os.getenv("RAILWAY_TOKEN")
-DB_URL = os.getenv("DATABASE_URL")
+DB_URL = os.getenv("DATABASE_PUBLIC_URL")
 
 # Перевірка наявності змінних
 if not TOKEN:
     raise ValueError("❌ RAILWAY_TOKEN не встановлено!")
 
 if not DB_URL:
-    raise ValueError("❌ DATABASE_URL не встановлено!")
+    raise ValueError("❌ DATABASE_PUBLIC_URL не встановлено!")
 
 # Функція для перевірки підключення до бази
 def check_postgres_connection():
