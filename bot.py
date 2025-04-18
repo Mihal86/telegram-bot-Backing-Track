@@ -12,7 +12,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not TOKEN:
     raise ValueError("❌ RAILWAY_TOKEN не встановлено!")
 
-if not DATABASE_PUBLIC_URL:
+if not DATABASE_URL:
     raise ValueError("❌ DATABASE_URL не встановлено!")
 
 # Функція для перевірки підключення до бази
